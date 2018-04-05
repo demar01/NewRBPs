@@ -1,0 +1,63 @@
+library(readxl)
+setwd("~/Downloads")
+myfile="Suppl_DevCell.xlsx"
+shA <- read_excel(myfile, "A")
+protrusionsRBP<-unlist(strsplit(shA$`Gene Names`[which(shA[,4]>2)], ";",fixed=FALSE))
+length(protrusionsRBP)
+protrusionsRBP_loose<-unlist(strsplit(shA$`Gene Names`[which(shA[,4]>1.3)], ";",fixed=FALSE))
+
+
+
+yeoFile<-"list_RBPs_search_Yeo2018.xlsx"
+shyeo<-read_excel(yeoFile,"eCLIP")
+protrusionsRBP[which(protrusionsRBP %in% shyeo$RBP)]
+castellofile<-"castello_2016.xlsx"
+castello <- read_excel(castellofile, "RBDpep")
+
+overlapwithCastello2016<-protrusionsRBP[which(protrusionsRBP %in% castello$Symbol)]
+overlapwithCastello2016
+#overlapwithCastello2016
+#71 in overlapwithCastello2016
+#Farazover2_castello<-c(shA$`Gene Names`[which(shA[,4]>2)], overlapwithCastello2016)
+write.table(overlapwithCastello2016,file="overlapwithCastello2016.csv")
+#other proteins
+  #LARP1 (), LARP4, LARP6, LARP7
+
+
+ZappuloFile<-"Zappulo_2017.xlsx"
+Zappulo<-read_excel(ZappuloFile,"Differentialexpression")
+Zappulo_proteins<-toupper(unique(Zappulo$gene_name[which(Zappulo$Proteomics_peptide_filter ==TRUE & Zappulo$Proteomics_log2FC_Neurite_Soma>1)]))
+Zappulo_protrusionenriched_RBPS<-toupper(unique(Zappulo$gene_name[which(Zappulo$Proteomics_peptide_filter ==TRUE & Zappulo$Proteomics_log2FC_Neurite_Soma>1 & Zappulo$RBP==TRUE)]))
+
+overlapwithZappulo2017<-protrusionsRBP[which(protrusionsRBP %in% Zappulo_proteins)]
+overlapwithZappulo2017
+
+Table1File<-"table1.xlsx"
+Table1<-read_excel(Table1File)
+Table1$ProteinNames
+'%!in%' <- function(x,y)!('%in%'(x,y))
+Table1_notincastello<-Table1$ProteinNames[which(Table1$ProteinNames %!in% castello$Symbol)]
+write.table(Table1_notincastello,file="Table1_notincastello.csv")
+#42 in Table1_notincastello 
+
+
+myFile_additionalCastello= "proteinGroups_median subtracked_plus additional cellines_Castello_higher in protruisons of all cell.xlsm"
+shA_addCastello<-read_excel(myFile_additionalCastello)
+
+
+RNA_binding<-list()
+RNA_binding_pos<-list()
+for(i in 1:dim(shA_addCastello)[1]){
+RNA_binding[[i]]<-unique(strsplit(as.character(shA_addCastello[i,6]),";",fixed=FALSE)[[1]]=="RNA-binding")
+RNA_binding_pos[[i]]<-length(RNA_binding[[i]])>1
+}
+
+shared_RNAbinding_higherprotru_allcelllines<-c(shA_addCastello[which(c(shA_addCastello[,8]=="+") & unlist(RNA_binding_pos)=="TRUE"),23])
+shared_RNAbinding_higherprotru_allcelllines <-as.character(unlist(shared_RNAbinding_higherprotru_allcelllines))
+write.table(shared_RNAbinding_higherprotru_allcelllines,file="shared_RNAbinding_higherprotru_allcelllines.csv")
+#11; 5 new not in overlapwithCastello2016
+shared_RNAbinding_higherprotru_allcelllines_notinsharedwithCastello<-shared_RNAbinding_higherprotru_allcelllines[shared_RNAbinding_higherprotru_allcelllines %!in% overlapwithCastello2016]
+write.table(shared_RNAbinding_higherprotru_allcelllines_notinsharedwithCastello,file="shared_RNAbinding_higherprotru_allcelllines_notinsharedwithCastello.csv")
+
+
+shared_RNAbinding_higherprotru_allcelllines %in% Table1_notincastello
